@@ -9,6 +9,9 @@
     "start": "node server/server.js",
     "start-watch": "nodemon server/server.js -e *.js"
   },
+  "engines": {
+    "node": "9.6.1"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
