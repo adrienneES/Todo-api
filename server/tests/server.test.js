@@ -1,11 +1,11 @@
 const expect = require('expect');
 const request = require('supertest');
-
+const {ObjectID} = require('mongodb');
 const {Todo} = require('./../../models/todo');
 const {app} = require('./../server');
 
-const todos = [{text: 'first todo'},
-{text: 'second todo'}]
+const todos = [{text: 'first todo', _id: new ObjectID()},
+{text: 'second todo', _id: new ObjectID()}]
 
 beforeEach((done)=>{
     Todo.remove({})
@@ -63,3 +63,32 @@ describe ('POST /todos', ()=>{
         });
     })
 });
+describe('GET /todos/:id', ()=>{
+    it('should return todo doc', (done)=>{
+        request(app)
+        .get(`/todos/${todos[1]._id.toHexString()}`)
+        .expect(200)
+        .expect((res)=>{
+            expect(res.body.todo.text).toBe(todos[1].text);
+        })
+        .end(done);
+    });
+    it('should check for bad objectID', (done)=>{
+        request(app)
+        .get('/todos/1a')
+        .expect(404)
+        .expect((res)=>{
+            expect(res.text).toBe('bad id');
+        })
+        .end(done);
+    })
+    it('should return not found for not found id', (done)=>{
+        request(app)
+        .get(`/todos/${new ObjectID().toHexString()}`)
+        .expect(404)
+        .expect((res)=>{
+            expect(res.text).toBe('not found');
+        })
+        .end(done);
+    })
+})
