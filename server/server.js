@@ -63,6 +63,9 @@ app.get('/todos/:id', (req, res)=> {
         res.send({todo});
     })
 })
+app.get('/', (req, res)=>{
+    res.send('this is todo app');
+})
 app.listen(PORT, ()=>{
     console.log('started on port ', PORT)
 });
