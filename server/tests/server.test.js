@@ -1,9 +1,9 @@
 const expect = require('expect');
 const request = require('supertest');
 const {ObjectID} = require('mongodb');
+const {app} = require('./../server');
 const {Todo} = require('./../../models/todo');
 const {User} = require('./../../models/user');
-const {app} = require('./../server');
 const todos = [{
     text: 'first todo', _id: new ObjectID()},
     {text: 'second todo', completed: true, completedAt: 123, _id: new ObjectID()}];
