@@ -51,6 +51,7 @@ app.post('/users', (req, res) =>  {
 app.post('/todos', authenticate, (req, res) =>  {
     var todo = new Todo( {
         text:req.body.text, 
+        completed: req.body.completed,
         _creator:req.user._id
     }); 
     todo.save().then((doc) =>  {
