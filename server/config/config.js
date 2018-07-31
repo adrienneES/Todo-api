@@ -1,9 +1,13 @@
 var env = process.env.NODE_ENV || 'development';
+
 console.log(`***** ${env} *****`)
-if (env === 'development') {
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoApp';
-} else if (env ==='test') {
-    process.env.PORT = 3001;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTest';
+
+// loads env vars PORT, JWT_SECRET & MONGODB_URI from file 
+//      that is not up on git
+if(env === 'development' || env === 'test') {
+    let config = require('./config.json');
+    let envConfig = config[env];
+    Object.keys(envConfig).forEach((key)=>{
+        process.env[key] = envConfig[key];
+    })
 }
