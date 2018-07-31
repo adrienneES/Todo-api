@@ -7,6 +7,7 @@ require('./config/config');
 const {mongoose} = require('./../db/mongoose');
 const {Todo} = require('./../models/todo');
 const {User} = require('./../models/user');
+const {authenticate} = require('./middleware/authenticate');
 const PORT = process.env.PORT;
 
 var app = express();
@@ -15,60 +16,38 @@ app.use((req, res, next)=>{
     console.log(req.url);
     next();
 });
+app.get('/users/me', authenticate, (req, res)=>{
+    res.send({user: req.user});
+});
+
+// POST /users/login {email, password}
+app.post('/users/login', (req, res)=>{
+    let body = _.pick(req.body, ['email', 'password']);
+    User.findByCredentials(body.email, body.password).then((user)=>{
+        user.generateAuthToken().then((token)=>{
+            res.header('x-auth', token).send(user);
+        });
+    }).catch((err)=>{
+        res.status(400).send(err);
+    })
+});
+app.delete('/users/me/token', authenticate, (req, res) =>{
+    req.user.removeToken(req.token).then(()=>{
+        res.status(200).send('user deleted');
+    }).catch((err)=>{
+        res.status(400);
+    });
+})
 app.post('/users', (req, res)=>{
-    const name = req.body.name;
-    var user = new User({name});
-    user.save().then((result)=>{
-        res.send(result);
+    var user = new User(_.pick(req.body, ['email', 'password']));
+    user.save().then(()=>{
+        return user.generateAuthToken();
+    })
+    .then((token)=>{
+        res.header('x-auth', token).send(user);
     })
     .catch((err)=>{res.status(400).send({msg:'uhoh', err})});
 })
-app.get('/users', (req, res)=>{
-    User.find().then((users)=>{
-        res.send({count: users.length, users});
-    }).catch((err)=>res.status(400).send(`err: ${err}`))
-});
-app.get('/users/:id', (req, res)=>{
-    var id = req.params.id;
-    if (!ObjectID.isValid(id)) {
-        return res.status(400).send('bad id');
-    }
-    User.findById(id).then((user)=>{
-        if (!user) {
-            return res.status(404).send('user not found');
-        }
-        res.send({user});
-    })
-});
-app.delete('/users/:id', (req, res)=>{
-    var id = req.params.id;
-    if (!ObjectID.isValid(id)) {
-        console.log('invalid id');
-        return res.status(400).send({msg: 'invalid id'});
-    }
-    User.findByIdAndRemove(id).then((user)=>{
-        if (!user){
-            return res.status(404).send({msg: 'not found'});
-        }
-        res.send({msg:'successfully deleted', user});
-    }).catch((err)=>{
-        console.log(`err: ${err}`);
-        res.status(404).send({msg: 'not found'})})
-});
-app.patch('/users/:id', (req, res)=>{
-    const id = req.params.id;
-    if(!ObjectID.isValid(id)) {
-        return res.status(400).send({msg: 'bad id'});
-    }
-    var body = _.pick(req.body, ['name']);
-    User.findByIdAndUpdate(id,{
-        $set:{name: body.name}
-    }, {new:true}).then((todo)=>{
-        if(!todo) {return res.status(404).send({msg:'not found'})}
-        res.send({msg: 'updated', todo});
-    }).catch((err)=>{res.status(400).send({msg:`oh uh: ${err}`})});
-})
-
 app.post('/todos', (req, res)=>{
     var todo = new Todo({text: req.body.text});
     todo.save().then((doc)=>{
