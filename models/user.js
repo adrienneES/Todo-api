@@ -65,7 +65,6 @@ UserSchema.pre('save', function(next) {
             const pw = user.password;
             bcrypt.hash(user.password, salt,(err, hash)=>{
                 user.password  = hash;
-                console.log(`saving password after hash pw: ${pw}, hash ${hash}`);
                 next();
             });
         });
